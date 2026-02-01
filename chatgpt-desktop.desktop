@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ChatGPT Desktop
+GenericName=AI Chat Client
+Comment=Desktop client for ChatGPT using OpenAI API
+Exec=chatgpt-desktop
+Icon=chatgpt-desktop
+Terminal=false
+Categories=Network;Chat;Office;Qt;
+Keywords=chatgpt;openai;ai;chat;assistant;gpt;
+StartupNotify=true
+StartupWMClass=chatgpt-desktop

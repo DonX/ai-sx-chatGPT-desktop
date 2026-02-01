@@ -1,0 +1,73 @@
+# Build directories
+build/
+build-*/
+*.o
+*.so
+*.a
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# Qt Creator files
+*.pro.user
+*.pro.user.*
+*.autosave
+CMakeLists.txt.user
+
+# Python generated files (from Qt tools)
+*_ui.py
+*_rc.py
+__pycache__/
+*.pyc
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled executables
+boh_chat_desktop
+chatgpt-desktop
+
+# User data (IMPORTANT: Keep API keys and database private!)
+*.db
+*.sqlite
+*.sqlite3
+chat_history.db
+
+# User configuration (API keys stored here!)
+*.conf
+settings.ini
+*api_key*
+*apikey*
+sk-*
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Package files
+*.rpm
+*.deb
+*.tar.gz
+*.zip
+
+# Distribution
+dist/
+pkg/
+
