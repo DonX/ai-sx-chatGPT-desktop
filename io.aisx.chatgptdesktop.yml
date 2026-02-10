@@ -1,0 +1,28 @@
+app-id: io.aisx.chatgptdesktop
+runtime: org.freedesktop.Platform
+runtime-version: "22.08"
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.qt5
+
+command: chatgpt-desktop
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=x11
+  - --socket=wayland
+  - --filesystem=home
+
+modules:
+  - name: ai-sx-chatgpt-desktop
+    buildsystem: cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    build-options:
+      append-path: /usr/lib/sdk/qt5/bin
+      env:
+        CMAKE_PREFIX_PATH: /usr/lib/sdk/qt5
+    sources:
+      - type: dir
+        path: .

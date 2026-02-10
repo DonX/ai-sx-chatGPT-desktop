@@ -15,24 +15,28 @@ The application installs and behaves like a proper Linux desktop program: it int
 ![ChatGPT Desktop](resources/icons/boh-chat.png)
 
 ---
+
 ## Project Status
 
-⚠️ **Early Release (v0.1.1 / internal)**
+**Release v1.2**
 
-This project is under active development.  
-Core functionality, desktop integration, and RPM packaging are now working and verified. Interfaces and workflows may still evolve.
+Core functionality, desktop integration, and RPM packaging are working and verified.
+Flatpak packaging is in preparation.
 
 ---
 
 ## Features
 
 - Native Qt5 desktop application (no browser dependency)
-- Persistent conversation history
-- Multiple chat threads
+- **Responsive UI** — chat area and sidebar resize with the window
+- **Collapsible sidebar** — drawer-style toggle to maximize chat space
+- **Markdown rendering** — AI responses display with proper formatting (paragraphs, code blocks, lists, bold, italic, headings)
+- Persistent conversation history with multiple chat threads
 - SQLite-based local storage
 - Secure per-user API key storage
 - Dark, distraction-free interface
 - Proper desktop integration (menu entry, icon, Wayland support)
+- Full conversation context sent with each request
 
 ---
 
@@ -44,9 +48,8 @@ Currently **tested and packaged** for:
 
 Distribution is handled via **Open Build Service (OBS)** and installs using `zypper`.
 
-No claims are made at this stage about support for other distributions.
-
 ---
+
 
 ## Installation (openSUSE Leap 16.0)
 
@@ -54,77 +57,78 @@ Add the repository:
 
 ```bash
 sudo zypper ar -f https://download.opensuse.org/repositories/home:/L_Don_X/16.0/ ai-sx
+```
 
 Refresh repositories and accept the signing key:
 
+```bash
 sudo zypper refresh
-
+```
 
 Install the application:
 
+```bash
 sudo zypper install ai-sx-chatgpt-desktop
+```
 
-Updating
+### Updating
 
 Updates are handled normally through the package manager:
 
+```bash
 sudo zypper refresh
 sudo zypper update ai-sx-chatgpt-desktop
+```
 
-Launching the Application
+---
 
-Launch from the desktop application menu
-or
+## Launching the Application
 
-Run from a terminal:
+Launch from the desktop application menu, or run from a terminal:
 
+```bash
 chatgpt-desktop
+```
 
-Configuration
-API Key Setup
+---
 
-Launch the application
+## Configuration
 
-Open Settings
+### API Key Setup
 
-Enter your OpenAI API key
-(create one at https://platform.openai.com/api-keys
-)
+1. Launch the application
+2. Open **Settings**
+3. Enter your OpenAI API key (create one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys))
+4. Select your preferred model
+5. Save and start chatting
 
-Select your preferred model
+### Local Storage
 
-Save and start chatting
+- **Configuration:** `~/.config/AXEM-SX/chatgpt-desktop.conf`
+- **Chat history database:** `~/.ai-chatgpt.db`
 
-Local Storage
+All data remains local to the user's machine.
 
-Configuration:
+---
 
-~/.config/ai-sx/ChatGPT Desktop.conf
-
-
-Chat history database:
-
-~/.local/share/ai-sx/chat_history.db
-
-
-All data remains local to the user’s machine.
-
-Relationship to AXEM-SX and Golda.Global
+## Relationship to AXEM-SX and Golda.Global
 
 ai-SX ChatGPT Desktop is a user-facing application developed within the broader AXEM-SX technology chair.
 
 AXEM-SX operates under Golda.Global, alongside related initiatives such as GoudDi.
 This application represents a concrete desktop tool within that ecosystem, without attempting to replace or redefine the underlying operating system.
 
-License
+---
 
-MIT License
-See the LICENSE file for details.
+## License
 
-Support
+MIT License — see the [LICENSE](LICENSE) file for details.
 
-Issues: https://github.com/DonX/ai-sx-chatGPT-desktop/issues
+---
 
-OpenAI API: https://platform.openai.com/docs
+## Support
 
-Note: This application requires an OpenAI API key. API usage is billed by OpenAI according to their pricing. This project is not affiliated with or endorsed by OpenAI.
+- **Issues:** [github.com/DonX/ai-sx-chatGPT-desktop/issues](https://github.com/DonX/ai-sx-chatGPT-desktop/issues)
+- **OpenAI API:** [platform.openai.com/docs](https://platform.openai.com/docs)
+
+> **Note:** This application requires an OpenAI API key. API usage is billed by OpenAI according to their pricing. This project is not affiliated with or endorsed by OpenAI.

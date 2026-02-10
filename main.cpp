@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     app.setApplicationName("ChatGPT Desktop");
     app.setOrganizationName("ai-sx");
     app.setOrganizationDomain("ai-sx.app");
-    app.setApplicationVersion("0.1.1");
+    app.setApplicationVersion("1.2");
 
     // Set application icon (multiple attempts for Linux compatibility)
     QIcon appIcon(":/resources/icons/boh-chat.png");

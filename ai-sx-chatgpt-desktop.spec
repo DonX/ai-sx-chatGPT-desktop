@@ -1,5 +1,5 @@
 Name:           ai-sx-chatgpt-desktop
-Version:        0.1.1
+Version:        1.2
 Release:        1%{?dist}
 Summary:        Native Linux desktop client for ChatGPT using the OpenAI API
 
@@ -37,8 +37,6 @@ Features include:
 %setup -q
 
 %build
-mkdir -p build
-cd build
 %cmake ..
 %make_build
 
@@ -65,6 +63,9 @@ desktop-file-validate \
 %doc README.md
 %{_bindir}/chatgpt-desktop
 %{_datadir}/applications/chatgpt-desktop.desktop
+%dir %{_datadir}/icons/hicolor
+%dir %{_datadir}/icons/hicolor/128x128
+%dir %{_datadir}/icons/hicolor/128x128/apps
 %{_datadir}/icons/hicolor/128x128/apps/chatgpt-desktop.png
 
 %post
@@ -77,6 +78,15 @@ desktop-file-validate \
 
 
 %changelog
+* Tue Feb 10 2026 Don Clermont <don.clermont@gmail.com> - 1.2-1
+- Responsive UI: chat area and sidebar now resize with window
+- Collapsible sidebar drawer with toggle button
+- Replaced fixed-geometry layout with QSplitter-based responsive layout
+
+* Tue Feb 03 2026 Don Clermont <don.clermont@gmail.com> - 0.1.2-1
+- Fix desktop launcher Exec to match installed binary
+- Restore application visibility across GNOME, KDE, Cinnamon, and LXQt
+
 * Mon Feb 02 2026 Don Clermont <1355350+DonX@users.noreply.github.com> - 0.1.1-1
 - Fix desktop launcher Exec target
 - Fix Wayland app identity

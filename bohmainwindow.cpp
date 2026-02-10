@@ -4,27 +4,35 @@
 #include "openai_client.h"
 #include "chat_store.h"
 #include "settingsdialog.h"
+#include "markdown_render.h"
 
 #include <QScrollBar>
 #include <QKeyEvent>
 #include <QIcon>
 #include <QMenu>
 #include <QMessageBox>
+#include <QSplitter>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QListWidget>
+#include <QTextBrowser>
+#include <QPlainTextEdit>
+#include <QPushButton>
 
 // =====================================================
 // Constructor
 // =====================================================
 BohMainWindow::BohMainWindow(QWidget *parent)
     : QMainWindow(parent),
-      ui(new Ui::BohMainWindow)
+      ui(new Ui::BohMainWindow),
+      savedSidebarWidth(220)
 {
-    // Build UI from .ui file
+    // Build UI skeleton from .ui file (menu, statusbar, central layout)
     ui->setupUi(this);
 
     // -------------------------------------------------
     // Window / Application Identity
     // -------------------------------------------------
-    // Set explicit window icon (prevents OS fallback icon like orange "W")
     setWindowIcon(QIcon(":/resources/icons/boh-chat.png"));
 
     // -------------------------------------------------
@@ -37,30 +45,150 @@ BohMainWindow::BohMainWindow(QWidget *parent)
     });
 
     // =================================================
+    // BUILD RESPONSIVE LAYOUT (programmatic)
+    // =================================================
+
+    // --- Sidebar: toggle button + "New Chat" + thread list ---
+    sidebarWidget = new QWidget(this);
+    sidebarWidget->setMinimumWidth(180);
+    sidebarWidget->setMaximumWidth(320);
+    sidebarWidget->setStyleSheet(
+        "QWidget#sidebarWidget {"
+        " border-right: 1px solid #444;"
+        " background: #1e1e1e;"
+        "}"
+    );
+    sidebarWidget->setObjectName("sidebarWidget");
+
+    auto *sidebarLayout = new QVBoxLayout(sidebarWidget);
+    sidebarLayout->setContentsMargins(4, 4, 4, 4);
+    sidebarLayout->setSpacing(4);
+
+    newChatBtn = new QPushButton("＋ New Chat", sidebarWidget);
+    newChatBtn->setStyleSheet(R"(
+        QPushButton {
+            background-color: #2b5fb8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px;
+            font-weight: bold;
+        }
+        QPushButton:hover { background-color: #3a6fc8; }
+        QPushButton:pressed { background-color: #1a4f98; }
+    )");
+
+    threadsList = new QListWidget(sidebarWidget);
+
+    sidebarLayout->addWidget(newChatBtn);
+    sidebarLayout->addWidget(threadsList, 1);  // stretch=1 fills remaining space
+
+    // --- Right side: chat area + input area ---
+    auto *chatPanel = new QWidget(this);
+    auto *chatPanelLayout = new QVBoxLayout(chatPanel);
+    chatPanelLayout->setContentsMargins(0, 0, 0, 0);
+    chatPanelLayout->setSpacing(0);
+
+    // Toggle sidebar button (sits above chat area)
+    auto *topBar = new QHBoxLayout();
+    topBar->setContentsMargins(4, 4, 4, 0);
+
+    toggleSidebarBtn = new QPushButton("☰", this);
+    toggleSidebarBtn->setFixedSize(32, 28);
+    toggleSidebarBtn->setToolTip("Toggle sidebar");
+    toggleSidebarBtn->setStyleSheet(R"(
+        QPushButton {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        QPushButton:hover { background: #333; color: white; }
+    )");
+    topBar->addWidget(toggleSidebarBtn);
+    topBar->addStretch(1);
+
+    chatPanelLayout->addLayout(topBar);
+
+    // Chat history (stretches to fill)
+    chatHistory = new QTextBrowser(chatPanel);
+    chatPanelLayout->addWidget(chatHistory, 1);  // stretch=1
+
+    // Input area (fixed proportion at bottom)
+    auto *inputWidget = new QWidget(chatPanel);
+    auto *inputLayout = new QHBoxLayout(inputWidget);
+    inputLayout->setContentsMargins(4, 4, 4, 4);
+    inputLayout->setSpacing(4);
+
+    userInput = new QPlainTextEdit(inputWidget);
+    userInput->setPlaceholderText("Ask @i…");
+    userInput->setMaximumHeight(120);
+
+    sendButton = new QPushButton("Send ➤", inputWidget);
+    sendButton->setMinimumSize(80, 40);
+    sendButton->setStyleSheet(R"(
+        QPushButton {
+            background-color: #2b5fb8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        QPushButton:hover { background-color: #3a6fc8; }
+        QPushButton:pressed { background-color: #1a4f98; }
+        QPushButton:disabled { background-color: #555; color: #999; }
+    )");
+
+    inputLayout->addWidget(userInput, 1);
+    inputLayout->addWidget(sendButton);
+
+    chatPanelLayout->addWidget(inputWidget);
+
+    // --- QSplitter: sidebar | chat panel ---
+    mainSplitter = new QSplitter(Qt::Horizontal, this);
+    mainSplitter->addWidget(sidebarWidget);
+    mainSplitter->addWidget(chatPanel);
+    mainSplitter->setStretchFactor(0, 0);  // sidebar: don't auto-stretch
+    mainSplitter->setStretchFactor(1, 1);  // chat: takes all extra space
+    mainSplitter->setSizes({220, 860});
+    mainSplitter->setChildrenCollapsible(false);
+    mainSplitter->setHandleWidth(2);
+
+    // Add splitter to the central widget layout from .ui
+    ui->centralwidget->layout()->addWidget(mainSplitter);
+
+    // =================================================
+    // SIDEBAR TOGGLE (collapsible drawer)
+    // =================================================
+    connect(toggleSidebarBtn, &QPushButton::clicked,
+            this, &BohMainWindow::toggleSidebar);
+
+    // =================================================
     // THREAD LIST — VISUAL & BEHAVIOR SETUP (ONE TIME)
     // =================================================
-    // These settings control row height, spacing,
-    // hover/selection behavior, and scrolling smoothness.
-    ui->threadsList->setSpacing(0);
-    ui->threadsList->setUniformItemSizes(true);
-    ui->threadsList->setVerticalScrollMode(
+    threadsList->setSpacing(0);
+    threadsList->setUniformItemSizes(true);
+    threadsList->setVerticalScrollMode(
         QAbstractItemView::ScrollPerPixel
     );
 
     // Enable context menu (right-click)
-    ui->threadsList->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->threadsList, &QListWidget::customContextMenuRequested,
+    threadsList->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(threadsList, &QListWidget::customContextMenuRequested,
             this, &BohMainWindow::showThreadContextMenu);
 
-    ui->threadsList->setStyleSheet(R"(
+    threadsList->setStyleSheet(R"(
         QListWidget {
             border: none;
             background: #1e1e1e;
         }
 
         QListWidget::item {
-            height: 28px;        /* controls vertical spacing */
-            padding: 2px 8px;    /* top/bottom | left/right */
+            height: 28px;
+            padding: 2px 8px;
             margin: 0px;
             color: #dddddd;
         }
@@ -84,20 +212,20 @@ BohMainWindow::BohMainWindow(QWidget *parent)
     // =================================================
     // STEP 2 — LOAD CURRENT THREAD CONTENT
     // =================================================
-    ui->chatHistory->setHtml(
+    chatHistory->setHtml(
         ChatStore::loadThread(currentThreadId)
     );
 
     // =================================================
     // STEP 3 — THREAD SELECTION → LOAD CHAT
     // =================================================
-    connect(ui->threadsList, &QListWidget::itemClicked,
+    connect(threadsList, &QListWidget::itemClicked,
             this, [this](QListWidgetItem *item) {
 
         int threadId = item->data(Qt::UserRole).toInt();
         currentThreadId = threadId;
 
-        ui->chatHistory->setHtml(
+        chatHistory->setHtml(
             ChatStore::loadThread(threadId)
         );
     });
@@ -105,70 +233,54 @@ BohMainWindow::BohMainWindow(QWidget *parent)
     // =================================================
     // STEP 4 — NEW CHAT BUTTON
     // =================================================
-    connect(ui->newChatBtn, &QPushButton::clicked,
+    connect(newChatBtn, &QPushButton::clicked,
             this, [this]() {
 
         // Create new thread in DB
         currentThreadId = ChatStore::createThread();
 
         // Clear chat display
-        ui->chatHistory->clear();
+        chatHistory->clear();
 
         // Reload thread list and select new thread
         reloadThreadsList();
     });
 
     // =================================================
-    // LEFT PANEL VISUAL SEPARATION
-    // =================================================
-    ui->leftPanel->setStyleSheet(
-        "QWidget {"
-        " border-right: 1px solid #444;"
-        " background: #1e1e1e;"
-        "}"
-    );
-
-    // =================================================
-    // INPUT & BUTTON AFFORDANCES
-    // =================================================
-    ui->userInput->setPlaceholderText("Ask @i…");
-    ui->newChatBtn->setText("＋ New Chat");
-
-    // =================================================
     // OpenAI Client Wiring
     // =================================================
     openai = new OpenAIClient(this);
 
-    connect(ui->sendButton, &QPushButton::clicked,
+    connect(sendButton, &QPushButton::clicked,
             this, &BohMainWindow::onSendClicked);
 
     connect(openai, &OpenAIClient::replyReady, this,
             [this](const QString &reply) {
 
-        ui->chatHistory->append("<b>AI:</b> " + reply);
-        ui->chatHistory->verticalScrollBar()->setValue(
-            ui->chatHistory->verticalScrollBar()->maximum()
+        chatHistory->append("<b>AI:</b><br>" + MarkdownRender::toHtml(reply));
+        chatHistory->verticalScrollBar()->setValue(
+            chatHistory->verticalScrollBar()->maximum()
         );
 
         ChatStore::addMessage(
             currentThreadId, "assistant", reply
         );
 
-        ui->sendButton->setEnabled(true);
-        ui->sendButton->setText("Send ➤");
+        sendButton->setEnabled(true);
+        sendButton->setText("Send ➤");
         ui->statusbar->showMessage("Response received", 3000);
     });
 
     connect(openai, &OpenAIClient::errorOccurred, this,
             [this](const QString &err) {
 
-        ui->chatHistory->append("<b style='color: #ff6b6b;'>Error:</b> " + err);
-        ui->chatHistory->verticalScrollBar()->setValue(
-            ui->chatHistory->verticalScrollBar()->maximum()
+        chatHistory->append("<b style='color: #ff6b6b;'>Error:</b> " + err);
+        chatHistory->verticalScrollBar()->setValue(
+            chatHistory->verticalScrollBar()->maximum()
         );
 
-        ui->sendButton->setEnabled(true);
-        ui->sendButton->setText("Send ➤");
+        sendButton->setEnabled(true);
+        sendButton->setText("Send ➤");
         ui->statusbar->showMessage("Error: " + err, 5000);
     });
 }
@@ -187,23 +299,23 @@ BohMainWindow::~BohMainWindow()
 void BohMainWindow::onSendClicked()
 {
     const QString text =
-        ui->userInput->toPlainText().trimmed();
+        userInput->toPlainText().trimmed();
 
     if (text.isEmpty())
         return;
 
-    ui->chatHistory->append("<b>You:</b> " + text);
-    ui->chatHistory->verticalScrollBar()->setValue(
-        ui->chatHistory->verticalScrollBar()->maximum()
+    chatHistory->append("<b>You:</b> " + text.toHtmlEscaped().replace("\n", "<br>"));
+    chatHistory->verticalScrollBar()->setValue(
+        chatHistory->verticalScrollBar()->maximum()
     );
 
     ChatStore::addMessage(
         currentThreadId, "user", text
     );
 
-    ui->userInput->clear();
-    ui->sendButton->setEnabled(false);
-    ui->sendButton->setText("Sending...");
+    userInput->clear();
+    sendButton->setEnabled(false);
+    sendButton->setText("Sending...");
 
     // Show status message
     ui->statusbar->showMessage("Sending message to OpenAI...");
@@ -224,7 +336,7 @@ void BohMainWindow::keyPressEvent(QKeyEvent *event)
         event->key() == Qt::Key_Enter) {
 
         if (event->modifiers() & Qt::ShiftModifier) {
-            ui->userInput->insertPlainText("\n");
+            userInput->insertPlainText("\n");
         } else {
             onSendClicked();
         }
@@ -239,7 +351,7 @@ void BohMainWindow::keyPressEvent(QKeyEvent *event)
 // =====================================================
 void BohMainWindow::showThreadContextMenu(const QPoint &pos)
 {
-    QListWidgetItem *item = ui->threadsList->itemAt(pos);
+    QListWidgetItem *item = threadsList->itemAt(pos);
     if (!item)
         return;
 
@@ -255,11 +367,11 @@ void BohMainWindow::showThreadContextMenu(const QPoint &pos)
     QAction *deleteAction = menu.addAction("🗑️ Delete");
 
     // Show menu and get selected action
-    QAction *selected = menu.exec(ui->threadsList->mapToGlobal(pos));
+    QAction *selected = menu.exec(threadsList->mapToGlobal(pos));
 
     if (selected == renameAction) {
         // Make item editable and enter edit mode
-        ui->threadsList->editItem(item);
+        threadsList->editItem(item);
     }
     else if (selected == deleteAction) {
         // Confirm deletion
@@ -283,11 +395,11 @@ void BohMainWindow::showThreadContextMenu(const QPoint &pos)
                 if (remainingThreads.isEmpty()) {
                     // No threads left - create a new one
                     currentThreadId = ChatStore::createThread();
-                    ui->chatHistory->clear();
+                    chatHistory->clear();
                 } else {
                     // Switch to the first remaining thread
                     currentThreadId = remainingThreads.first().id;
-                    ui->chatHistory->setHtml(
+                    chatHistory->setHtml(
                         ChatStore::loadThread(currentThreadId)
                     );
                 }
@@ -300,17 +412,37 @@ void BohMainWindow::showThreadContextMenu(const QPoint &pos)
 }
 
 // =====================================================
+// SIDEBAR TOGGLE (collapsible drawer)
+// =====================================================
+void BohMainWindow::toggleSidebar()
+{
+    if (sidebarWidget->isVisible()) {
+        // Save current width before hiding
+        savedSidebarWidth = mainSplitter->sizes().at(0);
+        sidebarWidget->hide();
+        toggleSidebarBtn->setText("☰");
+        toggleSidebarBtn->setToolTip("Show sidebar");
+    } else {
+        sidebarWidget->show();
+        mainSplitter->setSizes({savedSidebarWidth,
+                                width() - savedSidebarWidth});
+        toggleSidebarBtn->setText("✕");
+        toggleSidebarBtn->setToolTip("Hide sidebar");
+    }
+}
+
+// =====================================================
 // RELOAD THREADS LIST (Helper Function)
 // =====================================================
 void BohMainWindow::reloadThreadsList()
 {
-    ui->threadsList->clear();
+    threadsList->clear();
     auto threads = ChatStore::loadThreads();
 
     for (const auto &t : threads) {
         auto *item = new QListWidgetItem(
             t.title.isEmpty() ? "New Chat" : t.title,
-            ui->threadsList
+            threadsList
         );
 
         item->setData(Qt::UserRole, t.id);
@@ -324,13 +456,13 @@ void BohMainWindow::reloadThreadsList()
 
         // Select current thread
         if (t.id == currentThreadId) {
-            ui->threadsList->setCurrentItem(item);
+            threadsList->setCurrentItem(item);
         }
     }
 
     // Wire up rename handler (only once per reload)
-    disconnect(ui->threadsList, &QListWidget::itemChanged, nullptr, nullptr);
-    connect(ui->threadsList, &QListWidget::itemChanged,
+    disconnect(threadsList, &QListWidget::itemChanged, nullptr, nullptr);
+    connect(threadsList, &QListWidget::itemChanged,
             this, [](QListWidgetItem *item) {
         int threadId = item->data(Qt::UserRole).toInt();
         QString title = item->text().trimmed();

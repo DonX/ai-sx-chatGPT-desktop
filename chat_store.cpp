@@ -1,5 +1,6 @@
 #include "chat_store.h"
 #include "openai_client.h"  // For ChatMessage struct
+#include "markdown_render.h"
 #include <QtSql>
 #include <QDir>
 
@@ -164,7 +165,15 @@ QString ChatStore::loadThread(int threadId)
         if (role == "user") displayRole = "You";
         else if (role == "assistant") displayRole = "AI";
 
-        out += "<b>" + displayRole + ":</b> " + content + "<br>";
+        if (role == "assistant") {
+            // AI messages: full markdown rendering
+            out += "<b>" + displayRole + ":</b><br>"
+                   + MarkdownRender::toHtml(content) + "<br>";
+        } else {
+            // User messages: preserve newlines, escape HTML
+            out += "<b>" + displayRole + ":</b> "
+                   + content.toHtmlEscaped().replace("\n", "<br>") + "<br>";
+        }
     }
     return out;
 }

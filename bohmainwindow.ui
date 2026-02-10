@@ -18,139 +18,22 @@
     <normaloff>:/resources/icons/boh-chat.png</normaloff>:/resources/icons/boh-chat.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="verticalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>10</y>
-      <width>811</width>
-      <height>511</height>
-     </rect>
+   <layout class="QHBoxLayout" name="centralLayout">
+    <property name="leftMargin">
+     <number>0</number>
     </property>
-    <layout class="QVBoxLayout" name="chatViewArea">
-     <item>
-      <widget class="QTextBrowser" name="chatHistory"/>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="horizontalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>9</x>
-      <y>9</y>
-      <width>201</width>
-      <height>651</height>
-     </rect>
+    <property name="topMargin">
+     <number>0</number>
     </property>
-    <layout class="QHBoxLayout" name="leftPanelLayout">
-     <item>
-      <widget class="QWidget" name="leftPanel" native="true">
-       <widget class="QListWidget" name="threadsList">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>52</y>
-          <width>201</width>
-          <height>599</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="newChatBtn">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>180</width>
-          <height>32</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>＋ New Chat</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QPushButton {
-    background-color: #2b5fb8;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 6px;
-    font-weight: bold;
-}
-QPushButton:hover {
-    background-color: #3a6fc8;
-}
-QPushButton:pressed {
-    background-color: #1a4f98;
-}</string>
-        </property>
-       </widget>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="horizontalLayoutWidget_2">
-    <property name="geometry">
-     <rect>
-      <x>219</x>
-      <y>529</y>
-      <width>811</width>
-      <height>131</height>
-     </rect>
+    <property name="rightMargin">
+     <number>0</number>
     </property>
-    <layout class="QHBoxLayout" name="inputArea">
-     <item>
-      <widget class="QPlainTextEdit" name="userInput">
-       <property name="placeholderText">
-        <string>Ask @i ...</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="sendButton">
-       <property name="minimumSize">
-        <size>
-         <width>80</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Send ➤</string>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QPushButton {
-    background-color: #2b5fb8;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-weight: bold;
-    font-size: 14px;
-}
-QPushButton:hover {
-    background-color: #3a6fc8;
-}
-QPushButton:pressed {
-    background-color: #1a4f98;
-}
-QPushButton:disabled {
-    background-color: #555;
-    color: #999;
-}</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1093</width>
-     <height>26</height>
-    </rect>
-   </property>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
      <string>Settings</string>

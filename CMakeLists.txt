@@ -9,18 +9,19 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets Network Sql)
 
-add_executable(boh_chat_desktop
+add_executable(chatgpt-desktop
   main.cpp
   bohmainwindow.h bohmainwindow.cpp bohmainwindow.ui
   openai_client.h openai_client.cpp
   chat_store.h chat_store.cpp
+  markdown_render.h markdown_render.cpp
   settingsdialog.h
   settingsdialog.cpp
   settingsdialog.ui
   app_icons.qrc
 )
 
-target_link_libraries(boh_chat_desktop
+target_link_libraries(chatgpt-desktop
   Qt5::Widgets
   Qt5::Network
   Qt5::Sql
@@ -31,7 +32,7 @@ target_link_libraries(boh_chat_desktop
 # ----------------------------
 
 # Install the application binary
-install(TARGETS boh_chat_desktop
+install(TARGETS chatgpt-desktop
     RUNTIME DESTINATION bin
 )
 
